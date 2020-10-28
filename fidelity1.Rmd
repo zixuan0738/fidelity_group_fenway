@@ -1,0 +1,132 @@
+---
+title: "Untitled"
+author: "mary liu"
+date: "10/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(base)
+# install and load packages
+library(knitr)
+library(tidyverse)
+library(magrittr)
+library(naniar)
+#install.packages('RcppBDT')
+library(RcppBDT)
+library(kableExtra)
+
+opts_chunk$set(echo = FALSE, 
+               warning = FALSE,
+               message = FALSE)
+
+pacman::p_load(
+  "ggplot2",
+  "knitr",
+  "arm",
+  "data.table",
+  "foreign",
+  "car",
+  "faraway",
+  "nnet",
+  "reshape2",
+  "VGAM"
+)
+#install.packages('readxl')
+library(readxl)
+```
+
+
+```{r}
+#load data
+sp500 <- read_csv("C:/Users/49431/Downloads/GSPC.csv")
+
+
+head(sp500)
+
+
+data1 = sp500[c("Date","Adj Close","Volume")]
+head(data1,15)
+
+
+mean(sp500$turn_pre)
+mean(sp500$turn_post)
+```
+
+
+```{r}
+#sum(sp500$Volume)
+
+
+data1[data1 == NA] = NA
+# observations contains NA
+
+num3 = complete.cases(sp500)
+missing = data.frame(sp500)
+#rownames(missing) = 'missing values'
+gg_miss_var(missing) + theme(text = element_text(size=7)) +
+  ylab('Number of Missing Values in Each Variable')
+```
+
+
+```{r}
+
+
+
+for (i in 1998:2020){
+  Mar <- getNthDayOfWeek(third, Fri, 3, i)
+  Jun <- getNthDayOfWeek(third, Fri, 6, i)
+  Sep <- getNthDayOfWeek(third, Fri, 9, i)
+  Dec <- getNthDayOfWeek(third, Fri, 12, i)
+  
+  
+  if ( i == 1998){
+    quad_witching_date <- cbind.data.frame(Mar,Jun,Sep,Dec)
+  }
+  else{
+    quad_witching_date <- rbind.data.frame(quad_witching_date, cbind.data.frame(Mar,Jun,Sep,Dec))
+  }
+}
+quad_witching_date
+
+quad_witching <- data.frame(day = c(quad_witching_date[,'Mar'], quad_witching_date[,'Jun'], quad_witching_date[,'Sep'], quad_witching_date[,'Dec']))
+quad_witching
+```
+
+```{r}
+
+#data1[data1$Date %in% quad_witching,]
+#data1$Date %in% quad_witching
+#is.element(data1$Date,c(quad_witching))
+#data1[data1$Date == "1998-03-20",]
+
+#typeof(data.frame(data1$Date))
+data2 = data.frame(sp500[c("Date","Adj Close","Volume","Turnover","turn_pre","turn_post")])
+head(data2)
+#head(quad_witching)
+
+data3 = data2[is.element(data2$Date,quad_witching$day),]
+data3
+```
+```{r}
+mean(data3$turn_pre)
+mean(data3$turn_post)
+plot(y= sp500$Turnover, x = sp500$Date, type = "l", main = "Overall Trend", xlab = "Date", ylab = "Turnover",col = "red")
+```
+```{r}
+plot(y= data3$turn_pre, x = data3$Date, type = "b", main = "Turnover percentage (pervious day compare with current day)", xlab = "Date", ylab = "Turnover percentage")
+plot(y= data3$turn_post, x = data3$Date, type = "b", main = "Turnover percentage (Postday compare with current day)", xlab = "Date", ylab = "Turnover percentage")
+```
+
+we made a new dataset adding 3 more variables: turnover, turn_pre and turn_post. Turnover is just multiplying adjust close and volume
+
+turnover per: How much is today compared to yesterday, like the percentage increase/ decrease
+turnover post percentage: How much is today compared to tmrw
+
+
+the turnover varibale is easy to understand, but i wanna go a little more detail about the variable Turn_pre, we can see in this plot that most of the quaddurple day turnover pre percentage is above 0 percet. and there are only few which are below 0. we also calculated the average of turnover pre percent, which is 28.7% and cpmpare this with the average of overall turn_pre is a huge increase.
+
+this is the plot for turnover post percenage. if we draw a line on y = 0, we can see there are only 4 dots thats either lay on the line or a little below it. but there are bunch of the points that's above and there are even 4 points thats like way way above it. 
+
+so this also show that quadruple day also has a impact on turnover
